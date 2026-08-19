@@ -7,7 +7,6 @@ col_logo, col_titulo = st.columns([1, 3])
 
 with col_logo:
     st.image("logo.jpg1", width=100)
-
 with col_titulo:
     st.html("<h1 style='font-size: 1.8rem; font-weight: 700; margin-top: 10px;'>BEM-VINDOS AO SITE DA<br>MIMOSA CONFEITARIA!</h1>")
 
@@ -138,7 +137,11 @@ pagamento = st.radio(
 )
 
 troco_texto = ""
-if pagamento == "Dinheiro":
+
+if pagamento == "Pix":
+    st.info("💡 **Chave PIX (CNPJ):** `67833016000156`\n\n*Copie e cole a chave no seu aplicativo do banco. (Enviar o comprovante de pagamento)*")
+
+elif pagamento == "Dinheiro":
     precisa_troco = st.radio("Precisa de troco?", ["Não", "Sim"])
     if precisa_troco == "Sim":
         valor_troco = st.number_input("Troco para quanto? (R$)", min_value=0.0, step=5.0)
