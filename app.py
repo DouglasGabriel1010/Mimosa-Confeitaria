@@ -82,7 +82,6 @@ elif comida == "Tortinha Gourmet - R$ 12,00":
         "Escolha o Sabor da Tortinha:",
         ["Limao", "Maracuja"]
     )
-
     # MOSTRAR IMAGEM DA TORTINHA (deve ficar recuado com espaços!)
     if sabor_tortinha == "Limao":
         st.image("tortinha_limao.jpg", caption="Tortinha de Limao", width=250)
@@ -94,12 +93,7 @@ quantidade = st.number_input("Quantidade:", min_value=1, value=1)
 observacoes = st.text_area("Observações do Pedido:", placeholder="Ex: Diminuir a quantidade de frutas,  etc.", height=70)
 
 # DEPOIS coloca o botão de enviar
-if st.button("Enviar Pedido"):
-    if nome_cliente:
-        st.success(f"Obrigado, {nome_cliente}! Seu pedido de {quantidade}x {comida} foi registrado.")
-    else:
-        st.warning("Por favor, digite seu nome antes de enviar.")
-        st.write("---")
+import urllib.parse
 
 # Opção de entrega ou retirada
 tipo_entrega = st.radio(
@@ -124,7 +118,7 @@ if tipo_entrega == "Entrega (Motoboy)":
     with col_rua:
         rua = st.text_input("Rua / Avenida:")
     with col_num:
-        numero = st.text_input("Número:")
+        numero = st.text_input("Número :")
         
     # Ponto de referência e complemento
     complemento = st.text_input("Complemento (Apt, Bloco, etc.):", placeholder="Ex: Apto 102")
@@ -160,3 +154,53 @@ elif pagamento == "Dinheiro":
         troco_texto = f" (Troco para R$ {valor_troco:.2f})"
 
 st.success(f"Forma de pagamento selecionada: **{pagamento}**{troco_texto}")
+# --- CÁLCULO DO VALOR TOTAL ---
+# Define o valor unitário de acordo com a opção escolhida
+if "250ml" in comida:
+    preco_unitario = 15.00
+elif "350ml" in comida:
+    preco_unitario = 18.00
+elif "Tortinha" in comida:
+    preco_unitario = 12.00
+else:
+    preco_unitario = 0.00
+
+# Considera a taxa de entrega (se 'taxa_entrega' estiver definida)
+taxa = taxa_entrega if 'taxa_entrega' in locals() and tipo_entrega == "Entrega (Motoboy)" else 0.00
+valor_total = (preco_unitario * quantidade) + taxa
+
+# Exibe o valor total na tela
+st.markdown(f"### 💰 **Total do Pedido: R$ {valor_total:.2f}**")
+
+# --- BOTÃO DE ENVIAR PARA O WHATSAPP ---
+if st.button("Enviar Pedido pelo WhatsApp"):
+    if not nome_cliente:
+        st.warning("Por favor, digite seu nome antes de enviar.")
+    else:
+        numero_whatsapp = "5547996786099" 
+        
+        # Monta a informação de entrega/endereço
+        info_entrega = f"{tipo_entrega}"
+        if tipo_entrega == "Entrega (Motoboy)":
+            rua_txt = rua if 'rua' in locals() and rua else "Não informado"
+            numero_txt = numero_casa if ('numero_casa' in locals() and numero_casa) else "S/N"
+            bairro_txt = bairro if 'bairro' in locals() else ""
+            info_entrega += f"\n*Endereço:* {rua_txt}, Nº {numero_txt} - {bairro_txt}"
+        
+        mensagem = f"""*NOVO PEDIDO - MIMOSA CONFEITARIA* 🧁
+----------------------------------
+*Cliente:* {nome_cliente}
+*Item:* {comida}
+*Quantidade:* {quantidade}
+*Observações:* {observacoes if observacoes else 'Nenhuma'}
+----------------------------------
+*Forma de Entrega:* {info_entrega}
+*Forma de Pagamento:* {pagamento} {troco_texto if 'troco_texto' in locals() else ''}
+----------------------------------
+*VALOR TOTAL:* R$ {valor_total:.2f}
+"""
+        mensagem_codificada = urllib.parse.quote(mensagem)
+        link_whatsapp = f"https://wa.me/{numero_whatsapp}?text={mensagem_codificada}"
+        
+        st.success("Pedido gerado com sucesso!")
+        st.link_button("📲 Clique aqui para enviar no WhatsApp", link_whatsapp)
