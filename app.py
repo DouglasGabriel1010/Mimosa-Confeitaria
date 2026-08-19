@@ -6,7 +6,7 @@ st.set_page_config(page_title="Meu Cartão Interativo", page_icon="🛍️", lay
 col_logo, col_titulo = st.columns([1, 3])
 
 with col_logo:
-    st.image(r"C:\Users\dougl\Desktop\logo.jpg1", width=100)
+    st.image("logo.jpg1", width=100)
 
 with col_titulo:
     st.html("<h1 style='font-size: 1.8rem; font-weight: 700; margin-top: 10px;'>BEM-VINDOS AO SITE DA<br>MIMOSA CONFEITARIA!</h1>")
