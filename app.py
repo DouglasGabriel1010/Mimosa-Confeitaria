@@ -38,7 +38,9 @@ with col2:
         """, 
         unsafe_allow_html=True
     )
-
+    st.write("---")
+# --- DADOS DO CLIENTE ---
+nome_cliente = st.text_input("Seu Nome:")
 
 # Lista de opções principal
 comida = st.selectbox(
@@ -56,7 +58,10 @@ if "BomBom no Pote" in comida:
         "Escolha a Fruta:",
         ["Morango", "Uva", ]
     )
-    
+    if fruta == "Morango":
+        st.image("bombom_ninho.jpg", caption="Bombom de Morango", width=250)
+    elif fruta == "Uva":
+        st.image("bombom_uva1", caption="Bombom de Uva", width=250)
     # Escolha do Creme
     creme = st.selectbox(
         "Escolha o Sabor do Creme:",
@@ -75,13 +80,20 @@ elif comida == "Tortinha Gourmet - R$ 12,00":
     st.write("---")
     sabor_tortinha = st.selectbox(
         "Escolha o Sabor da Tortinha:",
-        ["Limão", "Maracujá", ]
-)
+        ["Limao", "Maracuja"]
+    )
 
+    # MOSTRAR IMAGEM DA TORTINHA (deve ficar recuado com espaços!)
+    if sabor_tortinha == "Limao":
+        st.image("tortinha_limao.jpg", caption="Tortinha de Limao", width=250)
+    elif sabor_tortinha == "Maracuja":
+        st.image("tortinha_maracuja.jpg", caption="Tortinha de Maracuja", width=250)
+
+# Primeiro cria os campos para o usuário preencher
 quantidade = st.number_input("Quantidade:", min_value=1, value=1)
-nome_cliente = st.text_input("Seu Nome:")
-observacoes = st.text_area("Observações do Pedido:")
+observacoes = st.text_area("Observações do Pedido:", placeholder="Ex: Diminuir a quantidade de frutas,  etc.", height=70)
 
+# DEPOIS coloca o botão de enviar
 if st.button("Enviar Pedido"):
     if nome_cliente:
         st.success(f"Obrigado, {nome_cliente}! Seu pedido de {quantidade}x {comida} foi registrado.")
