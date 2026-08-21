@@ -1,7 +1,21 @@
 import streamlit as st
+import pandas as pd
+
+# Cole o link da sua planilha compartilhada no lugar do texto abaixo
+URL_PLANILHA = "https://docs.google.com/spreadsheets/d/10eFP8aJNbem-8ULhjisqC8lfpWGzdZK_qsYrfOg7NJI/edit?gid=0#gid=0"
+
+# Converte o link para leitura pública em CSV
+URL_CSV = URL_PLANILHA.rsplit('/', 1)[0] + '/gviz/tq?tqx=out:csv'
+
+def carregar_pedidos():
+    try:
+        df = pd.read_csv(URL_CSV)
+        return df.to_dict(orient="records")
+    except:
+        return []
 
 if "pedidos" not in st.session_state:
-    st.session_state.pedidos = []
+    st.session_state.pedidos = carregar_pedidos()
 
 st.set_page_config(page_title="Meu Cartão Interativo", page_icon="🛍️", layout="centered")
 
@@ -151,7 +165,10 @@ troco_texto = ""
 if pagamento == "Pix":
     st.info("💡 **Chave PIX (CNPJ):** `67833016000156`\n\n*Copie e cole a chave no seu aplicativo do banco. (Enviar o comprovante de pagamento)*")
 
-elif pagamento == "Dinheiro":
+# Crie a variável vazia por padrão
+troco_texto = ""
+
+if pagamento == "Dinheiro":
     precisa_troco = st.radio("Precisa de troco?", ["Não", "Sim"])
     if precisa_troco == "Sim":
         valor_troco = st.number_input("Troco para quanto? (R$)", min_value=0.0, step=5.0)
@@ -190,9 +207,13 @@ if st.button("Finalizar Pedido"):
             "Entrega": tipo_entrega,
             "Pagamento": f"{pagamento} {troco_texto}"
         }
+        
+        if "pedidos" not in st.session_state:
+            st.session_state.pedidos = []
+            
         st.session_state.pedidos.append(novo_pedido)
         st.success("Pedido enviado com sucesso!")
-
+        
 # ==========================================
 # PÁGINA 2: ÁREA RESTRITA (ADMIN)
 # ==========================================
@@ -220,5 +241,6 @@ if senha_digitada == "adminmimosa":
         if st.button("Limpar Histórico de Pedidos"):
             st.session_state.pedidos = []
             st.rerun()
+
 elif senha_digitada != "":
     st.error("Senha incorreta!")
