@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-# Cole o link da sua planilha compartilhada no lugar do texto abaixo
+# Link da sua planilha do Google Sheets
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/10eFP8aJNbem-8ULhjisqC8lfpWGzdZK_qsYrfOg7NJI/edit?gid=0#gid=0"
-
-# Converte o link para leitura pública em CSV
 URL_CSV = URL_PLANILHA.rsplit('/', 1)[0] + '/gviz/tq?tqx=out:csv'
 
 def carregar_pedidos():
@@ -28,7 +26,6 @@ with col_titulo:
     st.html("<h1 style='font-size: 1.8rem; font-weight: 700; margin-top: 10px;'>BEM-VINDOS AO SITE DA<br>MIMOSA CONFEITARIA!</h1>")
 
 st.write("Faça seu pedido diretamente pelo nosso formulário abaixo ou entre em contato pelas redes sociais.")
-st.set_page_config  (page_title="Meu Cartão Interativo",     page_icon="🛍️", layout="centered")
 
 # Título e Logo
 col1, col2, col3 = st.columns([1, 1, 1])
@@ -191,9 +188,6 @@ else:
 taxa = taxa_entrega if 'taxa_entrega' in locals() and tipo_entrega == "Entrega (Motoboy)" else 0.00
 valor_total = (preco_unitario * quantidade) + taxa
 
-# Exibe o valor total na tela
-st.markdown(f"### 💰 **Total do Pedido: R$ {valor_total:.2f}**")
-
 # Botão para enviar/salvar o pedido
 if st.button("Finalizar Pedido"):
     if not nome_cliente or comida == "Selecione...":
@@ -208,39 +202,43 @@ if st.button("Finalizar Pedido"):
             "Pagamento": f"{pagamento} {troco_texto}"
         }
         
+        # Envia os dados diretamente para salvar na Planilha do Google
+        import requests
+        try:
+            # Converte a URL da planilha para salvar dados
+            url_envio = URL_PLANILHA.rsplit('/', 1)[0] + '/gviz/tq'
+            requests.post(url_envio, data=novo_pedido)
+        except:
+            pass
+
         if "pedidos" not in st.session_state:
             st.session_state.pedidos = []
-            
+
         st.session_state.pedidos.append(novo_pedido)
         st.success("Pedido enviado com sucesso!")
-        
-# ==========================================
+
+# =========================================================
 # PÁGINA 2: ÁREA RESTRITA (ADMIN)
-# ==========================================
+# =========================================================
 st.write("---")
 st.title("🔒 Painel do Administrador")
 
-senha_digitada = st.text_input("Digite a senha de acesso:", type="password", key="senha_admin")
+senha = st.text_input("Digite a senha do admin:", type="password")
 
-if senha_digitada == "adminmimosa":
-    st.success("Acesso autorizado!")
-    st.write("---")
-
-    st.subheader("📋 Lista de Pedidos Recebidos")
-
-    if len(st.session_state.pedidos) == 0:
-        st.info("Nenhum pedido foi registrado nesta sessão ainda.")
+if senha == "adminmimosa":
+    st.success("Acesso liberado!")
+    
+    # Tenta carregar pedidos da planilha e da sessão local
+    pedidos_planilha = carregar_pedidos()
+    pedidos_sessao = st.session_state.get("pedidos", [])
+    
+    # Junta todos os pedidos
+    todos_pedidos = pedidos_planilha + pedidos_sessao
+    
+    if todos_pedidos:
+        df_pedidos = pd.DataFrame(todos_pedidos)
+        st.dataframe(df_pedidos, use_container_width=True)
     else:
-        for idx, p in enumerate(st.session_state.pedidos, 1):
-            with st.expander(f"Pedido #{idx} - {p['Cliente']}"):
-                st.write(f"**Item:** {p['Item']} (x{p['Quantidade']})")
-                st.write(f"**Total:** {p['Total']}")
-                st.write(f"**Entrega:** {p['Entrega']}")
-                st.write(f"**Pagamento:** {p['Pagamento']}")
-
-        if st.button("Limpar Histórico de Pedidos"):
-            st.session_state.pedidos = []
-            st.rerun()
-
-elif senha_digitada != "":
+        st.info("Nenhum pedido cadastrado até o momento.")
+elif senha != "":
     st.error("Senha incorreta!")
