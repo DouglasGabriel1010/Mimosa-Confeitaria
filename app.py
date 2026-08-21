@@ -1,5 +1,8 @@
 import streamlit as st
 
+if "pedidos" not in st.session_state:
+    st.session_state.pedidos = []
+
 st.set_page_config(page_title="Meu Cartão Interativo", page_icon="🛍️", layout="centered")
 
 # --- LOGO E TÍTULO LADO A LADO ---
@@ -133,7 +136,8 @@ if tipo_entrega == "Entrega (Motoboy)":
             taxa_entrega = 8.00  # Valor padrão para demais bairros
             
         st.info(f"Taxa de entrega para **{bairro.title()}**: **R$ {taxa_entrega:.2f}**")
-        # --- FORMAS DE PAGAMENTO ---
+
+# --- FORMAS DE PAGAMENTO ---
 st.write("---")
 st.markdown("### 💳 Forma de Pagamento")
 
@@ -154,6 +158,7 @@ elif pagamento == "Dinheiro":
         troco_texto = f" (Troco para R$ {valor_troco:.2f})"
 
 st.success(f"Forma de pagamento selecionada: **{pagamento}**{troco_texto}")
+
 # --- CÁLCULO DO VALOR TOTAL ---
 # Define o valor unitário de acordo com a opção escolhida
 if "250ml" in comida:
@@ -172,35 +177,48 @@ valor_total = (preco_unitario * quantidade) + taxa
 # Exibe o valor total na tela
 st.markdown(f"### 💰 **Total do Pedido: R$ {valor_total:.2f}**")
 
-# --- BOTÃO DE ENVIAR PARA O WHATSAPP ---
-if st.button("Enviar Pedido pelo WhatsApp"):
-    if not nome_cliente:
-        st.warning("Por favor, digite seu nome antes de enviar.")
+# Botão para enviar/salvar o pedido
+if st.button("Finalizar Pedido"):
+    if not nome_cliente or comida == "Selecione...":
+        st.warning("Por favor, preencha seu nome e escolha um item.")
     else:
-        numero_whatsapp = "5547996786099" 
-        
-        # Monta a informação de entrega/endereço
-        info_entrega = f"{tipo_entrega}"
-        if tipo_entrega == "Entrega (Motoboy)":
-            rua_txt = rua if 'rua' in locals() and rua else "Não informado"
-            numero_txt = numero_casa if ('numero_casa' in locals() and numero_casa) else "S/N"
-            bairro_txt = bairro if 'bairro' in locals() else ""
-            info_entrega += f"\n*Endereço:* {rua_txt}, Nº {numero_txt} - {bairro_txt}"
-        
-        mensagem = f"""*NOVO PEDIDO - MIMOSA CONFEITARIA* 🧁
-----------------------------------
-*Cliente:* {nome_cliente}
-*Item:* {comida}
-*Quantidade:* {quantidade}
-*Observações:* {observacoes if observacoes else 'Nenhuma'}
-----------------------------------
-*Forma de Entrega:* {info_entrega}
-*Forma de Pagamento:* {pagamento} {troco_texto if 'troco_texto' in locals() else ''}
-----------------------------------
-*VALOR TOTAL:* R$ {valor_total:.2f}
-"""
-        mensagem_codificada = urllib.parse.quote(mensagem)
-        link_whatsapp = f"https://wa.me/{numero_whatsapp}?text={mensagem_codificada}"
-        
-        st.success("Pedido gerado com sucesso!")
-        st.link_button("📲 Clique aqui para enviar no WhatsApp", link_whatsapp)
+        novo_pedido = {
+            "Cliente": nome_cliente,
+            "Item": comida,
+            "Quantidade": quantidade,
+            "Total": f"R$ {valor_total:.2f}",
+            "Entrega": tipo_entrega,
+            "Pagamento": f"{pagamento} {troco_texto}"
+        }
+        st.session_state.pedidos.append(novo_pedido)
+        st.success("Pedido enviado com sucesso!")
+
+# ==========================================
+# PÁGINA 2: ÁREA RESTRITA (ADMIN)
+# ==========================================
+st.write("---")
+st.title("🔒 Painel do Administrador")
+
+senha_digitada = st.text_input("Digite a senha de acesso:", type="password", key="senha_admin")
+
+if senha_digitada == "adminmimosa":
+    st.success("Acesso autorizado!")
+    st.write("---")
+
+    st.subheader("📋 Lista de Pedidos Recebidos")
+
+    if len(st.session_state.pedidos) == 0:
+        st.info("Nenhum pedido foi registrado nesta sessão ainda.")
+    else:
+        for idx, p in enumerate(st.session_state.pedidos, 1):
+            with st.expander(f"Pedido #{idx} - {p['Cliente']}"):
+                st.write(f"**Item:** {p['Item']} (x{p['Quantidade']})")
+                st.write(f"**Total:** {p['Total']}")
+                st.write(f"**Entrega:** {p['Entrega']}")
+                st.write(f"**Pagamento:** {p['Pagamento']}")
+
+        if st.button("Limpar Histórico de Pedidos"):
+            st.session_state.pedidos = []
+            st.rerun()
+elif senha_digitada != "":
+    st.error("Senha incorreta!")
